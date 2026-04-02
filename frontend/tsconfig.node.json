@@ -1,9 +1,21 @@
 {
-  "compilerOptions": {
-    "composite": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "allowSyntheticDefaultImports": true
-  },
-  "include": ["vite.config.ts"]
+    "compilerOptions":  {
+                            "composite":  true,
+                            "module":  "ESNext",
+                            "moduleResolution":  "Bundler",
+                            "allowSyntheticDefaultImports":  true,
+                            "types":  [
+                                          "node",
+                                          "vite/client"
+                                      ],
+                            "lib":  [
+                                        "ES2022",
+                                        "DOM",
+                                        "WebWorker"
+                                    ],
+                            "skipLibCheck":  true
+                        },
+    "include":  [
+                    "vite.config.ts"
+                ]
 }
