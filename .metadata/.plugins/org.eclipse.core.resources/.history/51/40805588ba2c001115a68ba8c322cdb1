@@ -1,0 +1,39 @@
+package com.medicinetracker.mapper;
+
+import com.medicinetracker.dto.notification.NotificationResponse;
+import com.medicinetracker.entity.Notification;
+import com.medicinetracker.entity.enums.NotificationStatus;
+import com.medicinetracker.entity.enums.NotificationType;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = "org.mapstruct.ap.MappingProcessor",
+    date = "2026-03-31T09:50:51+0530",
+    comments = "version: 1.6.2, compiler: Eclipse JDT (IDE) 3.44.0.v20251118-1623, environment: Java 25.0.1 (Eclipse Adoptium)"
+)
+@Component
+public class NotificationMapperImpl implements NotificationMapper {
+
+    @Override
+    public NotificationResponse toResponse(Notification notification) {
+        if ( notification == null ) {
+            return null;
+        }
+
+        UUID id = null;
+        String title = null;
+        String message = null;
+        NotificationType type = null;
+        NotificationStatus status = null;
+        String channel = null;
+        OffsetDateTime createdAt = null;
+        OffsetDateTime readAt = null;
+
+        NotificationResponse notificationResponse = new NotificationResponse( id, title, message, type, status, channel, createdAt, readAt );
+
+        return notificationResponse;
+    }
+}

@@ -1,0 +1,38 @@
+package com.medicinetracker.mapper;
+
+import com.medicinetracker.dto.common.AuditLogResponse;
+import com.medicinetracker.entity.AuditLog;
+import com.medicinetracker.entity.enums.AuditAction;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = "org.mapstruct.ap.MappingProcessor",
+    date = "2026-03-31T09:50:51+0530",
+    comments = "version: 1.6.2, compiler: Eclipse JDT (IDE) 3.44.0.v20251118-1623, environment: Java 25.0.1 (Eclipse Adoptium)"
+)
+@Component
+public class AuditLogMapperImpl implements AuditLogMapper {
+
+    @Override
+    public AuditLogResponse toResponse(AuditLog auditLog) {
+        if ( auditLog == null ) {
+            return null;
+        }
+
+        UUID id = null;
+        AuditAction action = null;
+        String entityType = null;
+        String entityId = null;
+        String actorEmail = null;
+        String description = null;
+        String metadata = null;
+        OffsetDateTime createdAt = null;
+
+        AuditLogResponse auditLogResponse = new AuditLogResponse( id, action, entityType, entityId, actorEmail, description, metadata, createdAt );
+
+        return auditLogResponse;
+    }
+}
