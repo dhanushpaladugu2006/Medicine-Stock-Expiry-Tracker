@@ -11,3 +11,8 @@ spring:
           preferred_uuid_jdbc_type: UUID
   flyway:
     locations: classpath:db/migration/postgresql
+
+management:
+  health:
+    mail:
+      enabled: false
