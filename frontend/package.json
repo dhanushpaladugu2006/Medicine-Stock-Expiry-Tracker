@@ -1,37 +1,37 @@
 {
-    "name":  "medicine-stock-expiry-tracker-frontend",
-    "version":  "1.0.0",
-    "private":  true,
-    "type":  "module",
-    "scripts":  {
-                    "dev":  "vite",
-                    "build":  "tsc -b \u0026\u0026 vite build",
-                    "preview":  "vite preview"
-                },
-    "dependencies":  {
-                         "@tanstack/react-query":  "^5.66.0",
-                         "axios":  "^1.8.4",
-                         "clsx":  "^2.1.1",
-                         "lucide-react":  "^0.474.0",
-                         "react":  "^19.0.0",
-                         "react-dom":  "^19.0.0",
-                         "react-router-dom":  "^6.30.0",
-                         "recharts":  "^2.15.1",
-                         "sonner":  "^2.0.1",
-                         "tailwind-merge":  "^2.5.5",
-                         "zustand":  "^5.0.3"
-                     },
-    "devDependencies":  {
-                            "@types/node":  "^22.10.10",
-                            "@types/react":  "^19.0.7",
-                            "@types/react-dom":  "^19.0.3",
-                            "@vitejs/plugin-react-swc":  "^3.8.0",
-                            "autoprefixer":  "^10.4.20",
-                            "postcss":  "^8.5.1",
-                            "tailwindcss":  "^3.4.17",
-                            "typescript":  "^5.7.3",
-                            "vite":  "^6.1.0",
-                            "vite-plugin-pwa":  "^0.21.1",
-                            "@vite-pwa/assets-generator":  "^0.2.6"
-                        }
+    "name": "medicine-stock-expiry-tracker-frontend",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc -b && vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@tanstack/react-query": "^5.66.0",
+        "axios": "^1.8.4",
+        "clsx": "^2.1.1",
+        "lucide-react": "^0.474.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "react-router-dom": "^6.30.0",
+        "recharts": "^2.15.1",
+        "sonner": "^2.0.1",
+        "tailwind-merge": "^2.5.5",
+        "zustand": "^5.0.3"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.10",
+        "@types/react": "^19.0.7",
+        "@types/react-dom": "^19.0.3",
+        "@vite-pwa/assets-generator": "^0.2.6",
+        "@vitejs/plugin-react-swc": "^3.8.0",
+        "autoprefixer": "^10.4.20",
+        "postcss": "^8.5.1",
+        "tailwindcss": "^3.4.17",
+        "typescript": "5.7.3",
+        "vite": "^6.1.0",
+        "vite-plugin-pwa": "^0.21.1"
+    }
 }
