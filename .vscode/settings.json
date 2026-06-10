@@ -9,5 +9,6 @@
     "**/target/**"
   ],
   "java.compile.nullAnalysis.mode": "automatic",
-  "task.allowAutomaticTasks": "on"
+  "task.allowAutomaticTasks": "on",
+  "java.configuration.updateBuildConfiguration": "automatic"
 }
