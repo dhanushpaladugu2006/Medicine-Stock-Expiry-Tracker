@@ -7,5 +7,7 @@
   },
   "java.import.exclusions": [
     "**/target/**"
-  ]
+  ],
+  "java.compile.nullAnalysis.mode": "automatic",
+  "task.allowAutomaticTasks": "on"
 }
