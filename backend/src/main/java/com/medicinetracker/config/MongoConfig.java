@@ -7,8 +7,10 @@ import java.util.Date;
 import java.util.UUID;
 
 import com.medicinetracker.entity.BaseEntity;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import org.bson.UuidRepresentation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -18,12 +20,19 @@ import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback
 @Configuration
 public class MongoConfig {
 
+    @Value("${spring.mongodb.uri:mongodb://localhost:27017/medicine_tracker}")
+    private String mongoUri;
+
     @Bean
     public MongoClientSettings mongoClientSettings() {
         return MongoClientSettings.builder()
+                .applyConnectionString(new ConnectionString(mongoUri))
                 .uuidRepresentation(UuidRepresentation.STANDARD)
                 .build();
     }
+
+
+
 
     @Bean
     public MongoCustomConversions mongoCustomConversions() {
