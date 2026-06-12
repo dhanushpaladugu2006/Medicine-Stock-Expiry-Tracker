@@ -5,9 +5,9 @@ import java.util.UUID;
 
 import com.medicinetracker.entity.Notification;
 import com.medicinetracker.entity.enums.NotificationStatus;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface NotificationRepository extends JpaRepository<Notification, UUID> {
+public interface NotificationRepository extends MongoRepository<Notification, UUID> {
 
     List<Notification> findTop20ByUserIdOrderByCreatedAtDesc(UUID userId);
 

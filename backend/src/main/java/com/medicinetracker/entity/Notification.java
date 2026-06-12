@@ -4,49 +4,31 @@ import java.time.OffsetDateTime;
 
 import com.medicinetracker.entity.enums.NotificationStatus;
 import com.medicinetracker.entity.enums.NotificationType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
-@Entity
-@Table(name = "notifications")
+@Document(collection = "notifications")
 public class Notification extends BaseEntity {
 
-    @Column(nullable = false, length = 180)
     private String title;
 
-    @Column(nullable = false, length = 2000)
     private String message;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
     private NotificationType type;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
     private NotificationStatus status = NotificationStatus.PENDING;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "medicine_id")
+    @DocumentReference
     private Medicine medicine;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @DocumentReference
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "branch_id")
+    @DocumentReference
     private Branch branch;
 
-    @Column(nullable = false, length = 20)
     private String channel = "EMAIL";
 
-    @Column(length = 150)
     private String recipient;
 
     private OffsetDateTime sentAt;

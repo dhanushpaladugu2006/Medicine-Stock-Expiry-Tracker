@@ -9,8 +9,10 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import com.medicinetracker.config.AppProperties;
 import com.medicinetracker.dto.common.PageResponse;
@@ -35,14 +37,17 @@ import com.medicinetracker.service.AuditService;
 import com.medicinetracker.service.MedicineService;
 import com.medicinetracker.util.AuthenticatedUserProvider;
 import com.medicinetracker.util.FileValidationUtils;
-import com.medicinetracker.util.MedicineSpecifications;
 import com.medicinetracker.util.MedicineStatusCalculator;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.springframework.data.domain.Page;
+import org.bson.Document;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,8 +64,9 @@ public class MedicineServiceImpl implements MedicineService {
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final AuditService auditService;
     private final AppProperties appProperties;
+    private final MongoTemplate mongoTemplate;
 
-    public MedicineServiceImpl(MedicineRepository medicineRepository, BranchRepository branchRepository, StockTransactionRepository stockTransactionRepository, MedicineMapper medicineMapper, AuthenticatedUserProvider authenticatedUserProvider, AuditService auditService, AppProperties appProperties) {
+    public MedicineServiceImpl(MedicineRepository medicineRepository, BranchRepository branchRepository, StockTransactionRepository stockTransactionRepository, MedicineMapper medicineMapper, AuthenticatedUserProvider authenticatedUserProvider, AuditService auditService, AppProperties appProperties, MongoTemplate mongoTemplate) {
         this.medicineRepository = medicineRepository;
         this.branchRepository = branchRepository;
         this.stockTransactionRepository = stockTransactionRepository;
@@ -68,6 +74,7 @@ public class MedicineServiceImpl implements MedicineService {
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.auditService = auditService;
         this.appProperties = appProperties;
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Override
@@ -137,12 +144,55 @@ public class MedicineServiceImpl implements MedicineService {
     public PageResponse<MedicineResponse> searchMedicines(String search, String category, UUID branchId, String stockStatus,
                                                           LocalDate expiryFrom, LocalDate expiryTo, int page, int size) {
         UUID effectiveBranchId = resolveReadableBranch(branchId);
-        Page<Medicine> result = medicineRepository.findAll(
-                MedicineSpecifications.filter(search, category, effectiveBranchId, stockStatus, expiryFrom, expiryTo),
-                PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "expiryDate", "name"))
-        );
-        List<MedicineResponse> content = result.getContent().stream().map(this::toResponse).toList();
-        return new PageResponse<>(content, result.getTotalElements(), result.getTotalPages(), page, size);
+        Query query = new Query();
+        query.addCriteria(Criteria.where("archived").is(false));
+
+        if (effectiveBranchId != null) {
+            query.addCriteria(Criteria.where("branch").is(effectiveBranchId));
+        }
+
+        if (search != null && !search.isBlank()) {
+            String regex = ".*" + Pattern.quote(search.trim()) + ".*";
+            query.addCriteria(new Criteria().orOperator(
+                    Criteria.where("name").regex(regex, "i"),
+                    Criteria.where("batchNumber").regex(regex, "i"),
+                    Criteria.where("category").regex(regex, "i")
+            ));
+        }
+
+        if (category != null && !category.isBlank()) {
+            query.addCriteria(Criteria.where("category").regex("^" + Pattern.quote(category.trim()) + "$", "i"));
+        }
+
+        if (stockStatus != null && !stockStatus.isBlank()) {
+            switch (stockStatus.trim().toLowerCase()) {
+                case "low":
+                    query.addCriteria(Criteria.where("$expr").is(new Document("$lte", Arrays.asList("$quantity", "$reorderLevel"))));
+                    break;
+                case "out":
+                    query.addCriteria(Criteria.where("quantity").lte(0));
+                    break;
+                case "healthy":
+                    query.addCriteria(Criteria.where("$expr").is(new Document("$gt", Arrays.asList("$quantity", "$reorderLevel"))));
+                    break;
+            }
+        }
+
+        if (expiryFrom != null && expiryTo != null) {
+            query.addCriteria(Criteria.where("expiryDate").gte(expiryFrom).lte(expiryTo));
+        } else if (expiryFrom != null) {
+            query.addCriteria(Criteria.where("expiryDate").gte(expiryFrom));
+        } else if (expiryTo != null) {
+            query.addCriteria(Criteria.where("expiryDate").lte(expiryTo));
+        }
+
+        long total = mongoTemplate.count(query, Medicine.class);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "expiryDate", "name"));
+        query.with(pageable);
+        List<Medicine> list = mongoTemplate.find(query, Medicine.class);
+        List<MedicineResponse> content = list.stream().map(this::toResponse).toList();
+        long totalPages = (long) Math.ceil((double) total / size);
+        return new PageResponse<>(content, total, (int) totalPages, page, size);
     }
 
     @Override
@@ -236,7 +286,9 @@ public class MedicineServiceImpl implements MedicineService {
 
     @Override
     public void refreshStatuses() {
-        medicineRepository.findAll(MedicineSpecifications.filter(null, null, null, null, null, null)).forEach(medicine -> {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("archived").is(false));
+        mongoTemplate.find(query, Medicine.class).forEach(medicine -> {
             medicine.setStatus(MedicineStatusCalculator.calculate(medicine));
             medicineRepository.save(medicine);
         });
@@ -350,8 +402,8 @@ public class MedicineServiceImpl implements MedicineService {
 
     private long calculateRiskScore(Medicine medicine) {
         long daysToExpiry = Math.max(0, ChronoUnit.DAYS.between(LocalDate.now(), medicine.getExpiryDate()));
-        Integer consumption = stockTransactionRepository.totalConsumptionSince(medicine.getId(), OffsetDateTime.now().minusDays(30));
-        int monthlyConsumption = consumption == null ? 0 : consumption;
+        List<StockTransaction> txs = stockTransactionRepository.findByMedicineIdAndTransactionDateGreaterThanEqual(medicine.getId(), OffsetDateTime.now().minusDays(30));
+        int monthlyConsumption = txs.stream().filter(t -> t.getQuantityChange() < 0).mapToInt(t -> Math.abs(t.getQuantityChange())).sum();
         long demandPressure = monthlyConsumption == 0 ? 15 : Math.min(80, (long) monthlyConsumption * 2);
         long expiryPressure = daysToExpiry > 60 ? 10 : Math.max(10, 100 - daysToExpiry);
         long quantityPressure = medicine.getQuantity() > medicine.getReorderLevel() * 2L ? 20 : 60;

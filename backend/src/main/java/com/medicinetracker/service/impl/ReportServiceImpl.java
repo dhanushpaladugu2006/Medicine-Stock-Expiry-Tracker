@@ -29,9 +29,11 @@ import com.medicinetracker.repository.StockTransactionRepository;
 import com.medicinetracker.service.AuditService;
 import com.medicinetracker.service.ReportService;
 import com.medicinetracker.util.AuthenticatedUserProvider;
-import com.medicinetracker.util.MedicineSpecifications;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,12 +45,14 @@ public class ReportServiceImpl implements ReportService {
     private final StockTransactionRepository stockTransactionRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final AuditService auditService;
+    private final MongoTemplate mongoTemplate;
 
-    public ReportServiceImpl(MedicineRepository medicineRepository, StockTransactionRepository stockTransactionRepository, AuthenticatedUserProvider authenticatedUserProvider, AuditService auditService) {
+    public ReportServiceImpl(MedicineRepository medicineRepository, StockTransactionRepository stockTransactionRepository, AuthenticatedUserProvider authenticatedUserProvider, AuditService auditService, MongoTemplate mongoTemplate) {
         this.medicineRepository = medicineRepository;
         this.stockTransactionRepository = stockTransactionRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.auditService = auditService;
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Override
@@ -87,13 +91,13 @@ public class ReportServiceImpl implements ReportService {
             switch (type.toLowerCase()) {
                 case "expiry" -> {
                     printer.printRecord("Name", "Batch", "Branch", "Expiry Date", "Quantity", "Status");
-                    for (Medicine medicine : medicineRepository.findAll(MedicineSpecifications.filter(null, null, branchId, null, fromDate, toDate))) {
+                    for (Medicine medicine : findMedicines(branchId, fromDate, toDate)) {
                         printer.printRecord(medicine.getName(), medicine.getBatchNumber(), medicine.getBranch().getName(), medicine.getExpiryDate(), medicine.getQuantity(), medicine.getStatus());
                     }
                 }
                 case "stock" -> {
                     printer.printRecord("Name", "Batch", "Branch", "Quantity", "Reorder Level", "Price", "Status");
-                    for (Medicine medicine : medicineRepository.findAll(MedicineSpecifications.filter(null, null, branchId, null, null, null))) {
+                    for (Medicine medicine : findMedicines(branchId, null, null)) {
                         printer.printRecord(medicine.getName(), medicine.getBatchNumber(), medicine.getBranch().getName(), medicine.getQuantity(), medicine.getReorderLevel(), medicine.getPrice(), medicine.getStatus());
                     }
                 }
@@ -125,8 +129,8 @@ public class ReportServiceImpl implements ReportService {
             document.add(new Paragraph(" "));
 
             switch (type.toLowerCase()) {
-                case "expiry" -> addMedicineTable(document, medicineRepository.findAll(MedicineSpecifications.filter(null, null, branchId, null, fromDate, toDate)), true);
-                case "stock" -> addMedicineTable(document, medicineRepository.findAll(MedicineSpecifications.filter(null, null, branchId, null, null, null)), false);
+                case "expiry" -> addMedicineTable(document, findMedicines(branchId, fromDate, toDate), true);
+                case "stock" -> addMedicineTable(document, findMedicines(branchId, null, null), false);
                 case "usage" -> addUsageTable(document, branchId, fromDate, toDate);
                 default -> throw new BadRequestException("Unsupported report type");
             }
@@ -178,6 +182,22 @@ public class ReportServiceImpl implements ReportService {
 
     private void addCell(PdfPTable table, String value) {
         table.addCell(new PdfPCell(new Phrase(value)));
+    }
+
+    private List<Medicine> findMedicines(UUID branchId, LocalDate fromDate, LocalDate toDate) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("archived").is(false));
+        if (branchId != null) {
+            query.addCriteria(Criteria.where("branch").is(branchId));
+        }
+        if (fromDate != null && toDate != null) {
+            query.addCriteria(Criteria.where("expiryDate").gte(fromDate).lte(toDate));
+        } else if (fromDate != null) {
+            query.addCriteria(Criteria.where("expiryDate").gte(fromDate));
+        } else if (toDate != null) {
+            query.addCriteria(Criteria.where("expiryDate").lte(toDate));
+        }
+        return mongoTemplate.find(query, Medicine.class);
     }
 }
 

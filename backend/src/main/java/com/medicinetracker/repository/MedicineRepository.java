@@ -7,12 +7,10 @@ import java.util.UUID;
 
 import com.medicinetracker.entity.Medicine;
 import com.medicinetracker.entity.enums.MedicineStatus;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 
-public interface MedicineRepository extends JpaRepository<Medicine, UUID>, JpaSpecificationExecutor<Medicine> {
+public interface MedicineRepository extends MongoRepository<Medicine, UUID> {
 
     Optional<Medicine> findByIdAndArchivedFalse(UUID id);
 
@@ -28,19 +26,9 @@ public interface MedicineRepository extends JpaRepository<Medicine, UUID>, JpaSp
 
     List<Medicine> findByArchivedFalseAndExpiryDateLessThanEqual(LocalDate thresholdDate);
 
-    @Query("""
-            select m from Medicine m
-            where m.archived = false
-              and m.branch.id = :branchId
-              and m.quantity <= m.reorderLevel
-            """)
-    List<Medicine> findLowStockByBranch(@Param("branchId") UUID branchId);
+    @Query("{ 'archived': false, 'branch': ?0, '$expr': { '$lte': [ '$quantity', '$reorderLevel' ] } }")
+    List<Medicine> findLowStockByBranch(UUID branchId);
 
-    @Query("""
-            select m from Medicine m
-            where m.archived = false
-              and m.expiryDate between :fromDate and :toDate
-            order by m.expiryDate asc
-            """)
-    List<Medicine> findExpiringBetween(@Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
+    @Query(value = "{ 'archived': false, 'expiryDate': { $gte: ?0, $lte: ?1 } }", sort = "{ 'expiryDate': 1 }")
+    List<Medicine> findExpiringBetween(LocalDate fromDate, LocalDate toDate);
 }

@@ -19,7 +19,9 @@ import com.medicinetracker.repository.MedicineRepository;
 import com.medicinetracker.repository.StockTransactionRepository;
 import com.medicinetracker.service.DashboardService;
 import com.medicinetracker.util.AuthenticatedUserProvider;
-import com.medicinetracker.util.MedicineSpecifications;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,18 +32,25 @@ public class DashboardServiceImpl implements DashboardService {
     private final MedicineRepository medicineRepository;
     private final StockTransactionRepository stockTransactionRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final MongoTemplate mongoTemplate;
 
-    public DashboardServiceImpl(MedicineRepository medicineRepository, StockTransactionRepository stockTransactionRepository, AuthenticatedUserProvider authenticatedUserProvider) {
+    public DashboardServiceImpl(MedicineRepository medicineRepository, StockTransactionRepository stockTransactionRepository, AuthenticatedUserProvider authenticatedUserProvider, MongoTemplate mongoTemplate) {
         this.medicineRepository = medicineRepository;
         this.stockTransactionRepository = stockTransactionRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Override
     public DashboardSummaryResponse getSummary() {
         User user = authenticatedUserProvider.getCurrentUser();
         UUID branchId = user.getRole() == Role.ADMIN || user.getBranch() == null ? null : user.getBranch().getId();
-        List<Medicine> medicines = medicineRepository.findAll(MedicineSpecifications.filter(null, null, branchId, null, null, null));
+        Query query = new Query();
+        query.addCriteria(Criteria.where("archived").is(false));
+        if (branchId != null) {
+            query.addCriteria(Criteria.where("branch").is(branchId));
+        }
+        List<Medicine> medicines = mongoTemplate.find(query, Medicine.class);
         LocalDate today = LocalDate.now();
 
         long expiringIn7Days = medicines.stream().filter(m -> !m.getExpiryDate().isBefore(today) && !m.getExpiryDate().isAfter(today.plusDays(7))).count();
@@ -89,8 +98,8 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private PredictionInsightResponse toPrediction(Medicine medicine) {
-        Integer consumption = stockTransactionRepository.totalConsumptionSince(medicine.getId(), OffsetDateTime.now().minusDays(30));
-        int monthlyConsumption = consumption == null ? 0 : consumption;
+        List<StockTransaction> txs = stockTransactionRepository.findByMedicineIdAndTransactionDateGreaterThanEqual(medicine.getId(), OffsetDateTime.now().minusDays(30));
+        int monthlyConsumption = txs.stream().filter(t -> t.getQuantityChange() < 0).mapToInt(t -> Math.abs(t.getQuantityChange())).sum();
         long estimatedDaysToExhaust = monthlyConsumption <= 0 ? 999 : Math.max(1, Math.round((double) medicine.getQuantity() / (monthlyConsumption / 30.0)));
         long estimatedDaysToExpiry = Math.max(0, ChronoUnit.DAYS.between(LocalDate.now(), medicine.getExpiryDate()));
         String recommendation = estimatedDaysToExpiry < estimatedDaysToExhaust

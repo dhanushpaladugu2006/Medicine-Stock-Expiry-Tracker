@@ -1,17 +1,13 @@
 version: '3.9'
 
 services:
-  mysql:
-    image: mysql:8.4
-    container_name: medicine-tracker-mysql
-    environment:
-      MYSQL_DATABASE: medicine_tracker
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_ROOT_HOST: '%'
+  mongodb:
+    image: mongo:7.0
+    container_name: medicine-tracker-mongodb
     ports:
-      - '3306:3306'
+      - '27017:27017'
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mongo_data:/data/db
 
   backend:
     build:
@@ -19,9 +15,7 @@ services:
     container_name: medicine-tracker-backend
     environment:
       SERVER_PORT: 8080
-      DB_URL: jdbc:mysql://mysql:3306/medicine_tracker?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
-      DB_USERNAME: root
-      DB_PASSWORD: root
+      MONGO_URI: mongodb://mongodb:27017/medicine_tracker
       FRONTEND_URL: http://localhost:5173
       JWT_SECRET: ${JWT_SECRET:-U3VwZXJTZWNyZXRLZXlGb3JNZWRpY2luZVRyYWNrZXJTcHJpbmdCb290SldUMjAyNg==}
       UPLOAD_DIR: /app/uploads
@@ -33,7 +27,7 @@ services:
     ports:
       - '8080:8080'
     depends_on:
-      - mysql
+      - mongodb
     volumes:
       - backend_uploads:/app/uploads
 
@@ -56,5 +50,5 @@ services:
       - '8025:8025'
 
 volumes:
-  mysql_data:
+  mongo_data:
   backend_uploads:

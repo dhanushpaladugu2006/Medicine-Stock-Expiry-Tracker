@@ -5,9 +5,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.medicinetracker.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends MongoRepository<User, UUID> {
 
     Optional<User> findByEmailIgnoreCase(String email);
 

@@ -1,33 +1,21 @@
 package com.medicinetracker.entity;
 
 import com.medicinetracker.entity.enums.AuditAction;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Table(name = "audit_logs")
+@Document(collection = "audit_logs")
 public class AuditLog extends BaseEntity {
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
     private AuditAction action;
 
-    @Column(nullable = false, length = 80)
     private String entityType;
 
-    @Column(nullable = false, length = 80)
     private String entityId;
 
-    @Column(nullable = false, length = 150)
     private String actorEmail;
 
-    @Column(nullable = false, length = 1000)
     private String description;
 
-    @Column(length = 2000)
     private String metadata;
 
     public AuditLog() {

@@ -4,51 +4,33 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 import com.medicinetracker.entity.enums.StockTransactionType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
-@Entity
-@Table(name = "stock_transactions")
+@Document(collection = "stock_transactions")
 public class StockTransaction extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "medicine_id", nullable = false)
+    @DocumentReference
     private Medicine medicine;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "branch_id", nullable = false)
+    @DocumentReference
     private Branch branch;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "performed_by")
+    @DocumentReference
     private User performedBy;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
     private StockTransactionType type;
 
-    @Column(nullable = false)
     private Integer quantityBefore;
 
-    @Column(nullable = false)
     private Integer quantityChange;
 
-    @Column(nullable = false)
     private Integer quantityAfter;
 
-    @Column(length = 255)
     private String referenceNote;
 
-    @Column(precision = 12, scale = 2)
     private BigDecimal unitPrice;
 
-    @Column(nullable = false)
     private OffsetDateTime transactionDate = OffsetDateTime.now();
 
     public StockTransaction() {

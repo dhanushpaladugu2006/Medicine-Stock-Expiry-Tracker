@@ -1,16 +1,8 @@
 spring:
-  datasource:
-    url: ${RENDER_DB_URL:${SPRING_DATASOURCE_URL:}}
-    username: ${RENDER_DB_USERNAME:${SPRING_DATASOURCE_USERNAME:}}
-    password: ${RENDER_DB_PASSWORD:${SPRING_DATASOURCE_PASSWORD:}}
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    properties:
-      hibernate:
-        type:
-          preferred_uuid_jdbc_type: UUID
-  flyway:
-    locations: classpath:db/migration/postgresql
+  data:
+    mongodb:
+      uri: ${RENDER_MONGO_URI:${SPRING_DATA_MONGODB_URI:}}
+      uuid-representation: standard
 
 management:
   health:

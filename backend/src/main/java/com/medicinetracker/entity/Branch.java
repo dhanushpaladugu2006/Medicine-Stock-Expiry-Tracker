@@ -1,38 +1,28 @@
 package com.medicinetracker.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Table(name = "branches")
+@Document(collection = "branches")
 public class Branch extends BaseEntity {
 
-    @Column(nullable = false, length = 120)
     private String name;
 
-    @Column(nullable = false, unique = true, length = 40)
+    @Indexed(unique = true)
     private String code;
 
-    @Column(nullable = false, length = 255)
     private String address;
 
-    @Column(nullable = false, length = 80)
     private String city;
 
-    @Column(nullable = false, length = 80)
     private String state;
 
-    @Column(nullable = false, length = 80)
     private String country;
 
-    @Column(length = 30)
     private String phone;
 
-    @Column(length = 150)
     private String email;
 
-    @Column(nullable = false)
     private boolean active = true;
 
     public Branch() {

@@ -5,64 +5,41 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 import com.medicinetracker.entity.enums.MedicineStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
-@Entity
-@Table(name = "medicines", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_medicine_branch_batch", columnNames = {"branch_id", "batch_number"})
-})
+@Document(collection = "medicines")
+@CompoundIndex(name = "uk_medicine_branch_batch", def = "{'branch': 1, 'batchNumber': 1}", unique = true)
 public class Medicine extends BaseEntity {
 
-    @Column(nullable = false, length = 150)
     private String name;
 
-    @Column(name = "batch_number", nullable = false, length = 80)
     private String batchNumber;
 
-    @Column(nullable = false, length = 80)
     private String category;
 
-    @Column(nullable = false, length = 120)
     private String manufacturer;
 
-    @Column(nullable = false)
     private Integer quantity;
 
-    @Column(nullable = false)
     private Integer reorderLevel = 10;
 
-    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
-    @Column(nullable = false)
     private LocalDate expiryDate;
 
-    @Column(nullable = false)
     private LocalDate manufactureDate;
 
-    @Column(length = 120)
     private String barcode;
 
-    @Column(length = 255)
     private String imageUrl;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
     private MedicineStatus status = MedicineStatus.SAFE;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "branch_id", nullable = false)
+    @DocumentReference
     private Branch branch;
 
-    @Column(nullable = false)
     private boolean archived = false;
 
     private OffsetDateTime lastSoldAt;
