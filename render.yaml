@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: medicine-tracker-backend
+    env: docker
+    dockerContext: ./backend
+    dockerFilePath: ./backend/Dockerfile
+    plan: free
+    region: singapore # You can change this to your preferred region (e.g., oregon, frankfurt, singapore, ohio)
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+      - key: RENDER_MONGO_URI
+        sync: false # This will prompt you to enter your MongoDB connection string during setup
+      - key: JWT_SECRET
+        generateValue: true # Generates a secure random JWT secret automatically
+      - key: FRONTEND_URL
+        value: http://localhost:5173 # Update this to your frontend URL once deployed
+      - key: ENABLE_EMAIL_NOTIFICATIONS
+        value: "false"
+      - key: MANAGEMENT_HEALTH_MAIL_ENABLED
+        value: "false"
