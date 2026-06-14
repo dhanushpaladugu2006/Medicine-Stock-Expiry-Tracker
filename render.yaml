@@ -1,9 +1,9 @@
 services:
   - type: web
     name: medicine-tracker-backend
-    env: docker
+    runtime: docker
     dockerContext: ./backend
-    dockerFilePath: ./backend/Dockerfile
+    dockerfilePath: ./backend/Dockerfile
     plan: free
     region: singapore # You can change this to your preferred region (e.g., oregon, frankfurt, singapore, ohio)
     envVars:
