@@ -12,7 +12,7 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: render
       - key: RENDER_MONGO_URI
-        sync: false # This will prompt you to enter your MongoDB connection string during setup
+        value: mongodb+srv://dhanushpaladugu:Vaishu%2377@medicine.gbwuu3m.mongodb.net/medicine_tracker?appName=medicine
       - key: JWT_SECRET
         generateValue: true # Generates a secure random JWT secret automatically
       - key: FRONTEND_URL
